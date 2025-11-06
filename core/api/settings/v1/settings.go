@@ -280,8 +280,13 @@ type SetBlacklistAlertRes struct {
 
 type SetBlacklistAlertSettingsReq struct {
 	g.Meta        `path:"/settings/set_blacklist_alert_settings" tags:"Settings" method:"post" summary:"Set blacklist alert settings"`
-	Authorization string                 `json:"authorization" dc:"Authorization" in:"header"`
-	Settings      BlacklistAlertSettings `json:"settings" dc:"Alarm settings" v:"required"`
+	Authorization string   `json:"authorization" dc:"Authorization" in:"header"`
+	Name          string   `json:"name" dc:"Alarm sender's name" v:"required"`
+	SenderEmail   string   `json:"sender_email" dc:"sender email" v:"required|email" v:"required"`
+	SMTPPassword  string   `json:"smtp_password" dc:"SMTP password" v:"required" v:"required"`
+	SMTPServer    string   `json:"smtp_server" dc:"SMTP server" v:"required" v:"required"`
+	SMTPPort      int      `json:"smtp_port" dc:"SMTP port" v:"required|between:1,65535" d:"587" v:"required"`
+	RecipientList []string `json:"recipient_list" dc:"recipient list" v:"required"`
 }
 
 type SetBlacklistAlertSettingsRes struct {

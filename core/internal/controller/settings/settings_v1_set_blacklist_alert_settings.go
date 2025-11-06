@@ -19,26 +19,35 @@ import (
 func (c *ControllerV1) SetBlacklistAlertSettings(ctx context.Context, req *v1.SetBlacklistAlertSettingsReq) (res *v1.SetBlacklistAlertSettingsRes, err error) {
 	res = &v1.SetBlacklistAlertSettingsRes{}
 
-	if err := validateAlertSettings(&req.Settings); err != nil {
+	if err := validateAlertSettings(req); err != nil {
 		res.SetError(gerror.Newf(public.LangCtx(ctx, "Parameter validation failed: {}", err.Error())))
 		return res, nil
 	}
 
 	//g.Log().Info(ctx, "Testing SMTP connection...")
-	if err := testSMTPConnectionWithRelay(ctx, &req.Settings); err != nil {
+	if err := testSMTPConnectionWithRelay(ctx, req); err != nil {
 		res.SetError(gerror.Newf(public.LangCtx(ctx, "SMTP connection test failed: {}", err.Error())))
 		return res, nil
 	}
 
 	//g.Log().Info(ctx, "Sending test email...")
-	if err := sendTestEmailWithMailService(ctx, &req.Settings); err != nil {
+	if err := sendTestEmailWithMailService(ctx, req); err != nil {
 		res.SetError(gerror.Newf(public.LangCtx(ctx, "Failed to send test email: {}", err.Error())))
 		return res, nil
 	}
 
 	alertSettingsFile := public.AbsPath("../core/data/blacklist_alert_settings.json")
 
-	jsonData, err := json.MarshalIndent(req.Settings, "", "  ")
+	data := g.Map{
+		"name":           req.Name,
+		"sender_email":   req.SenderEmail,
+		"smtp_password":  req.SMTPPassword,
+		"smtp_server":    req.SMTPServer,
+		"smtp_port":      req.SMTPPort,
+		"recipient_list": req.RecipientList,
+	}
+
+	jsonData, err := json.MarshalIndent(data, "", "  ")
 	if err != nil {
 		res.SetError(gerror.Newf(public.LangCtx(ctx, "Failed to encode alert settings: {}", err.Error())))
 		return res, nil
@@ -54,7 +63,7 @@ func (c *ControllerV1) SetBlacklistAlertSettings(ctx context.Context, req *v1.Se
 	return res, nil
 }
 
-func validateAlertSettings(settings *v1.BlacklistAlertSettings) error {
+func validateAlertSettings(settings *v1.SetBlacklistAlertSettingsReq) error {
 	if settings.SenderEmail == "" {
 		return fmt.Errorf("sender email is required")
 	}
@@ -88,7 +97,7 @@ func validateAlertSettings(settings *v1.BlacklistAlertSettings) error {
 	return nil
 }
 
-func testSMTPConnectionWithRelay(ctx context.Context, settings *v1.BlacklistAlertSettings) error {
+func testSMTPConnectionWithRelay(ctx context.Context, settings *v1.SetBlacklistAlertSettingsReq) error {
 	//g.Log().Infof(ctx, "Testing SMTP connection to %s:%d", settings.SMTPServer, settings.SMTPPort)
 
 	result := relay.TestSmtpConnection(
@@ -106,7 +115,7 @@ func testSMTPConnectionWithRelay(ctx context.Context, settings *v1.BlacklistAler
 	return nil
 }
 
-func sendTestEmailWithMailService(ctx context.Context, settings *v1.BlacklistAlertSettings) error {
+func sendTestEmailWithMailService(ctx context.Context, settings *v1.SetBlacklistAlertSettingsReq) error {
 	//g.Log().Infof(ctx, "Sending test email to %v", settings.RecipientList)
 
 	subject := "Blacklist Alert Test - BillionMail"
@@ -150,7 +159,7 @@ func sendTestEmailWithMailService(ctx context.Context, settings *v1.BlacklistAle
 	return nil
 }
 
-func buildTestEmailHTML(settings *v1.BlacklistAlertSettings) string {
+func buildTestEmailHTML(settings *v1.SetBlacklistAlertSettingsReq) string {
 	return fmt.Sprintf(`
 <html>
 <head>
