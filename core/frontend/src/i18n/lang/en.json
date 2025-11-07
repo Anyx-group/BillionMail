@@ -830,6 +830,24 @@
 			"dnsRecord": "DNS Records",
 			"setDefault": "Set Default"
 		},
+		"notSpam": {
+			"checkNow": "Check Now",
+			"logs": "Logs"
+		},
+		"checkLogs": {
+			"title": "Check Logs"
+		},
+		"blacklistDetection": {
+			"title": "Black List Check",
+			"checking": "Checking {results} which resolves to {ip} against {tested} known blacklists...",
+			"listed": "Listed: {count}",
+			"success": "Your IP does not exist in the blacklist known by aaPanel",
+			"columns": {
+				"blacklist": "Black List",
+				"responseIp": "Response IP",
+				"checkTime": "Check Time"
+			}
+		},
 		"setDefault": {
 			"title": "Set Default [{domain}]",
 			"confirm": "Are you sure to set this domain as default?"
@@ -1081,7 +1099,8 @@
 				"applyingCert": "Applying certificate, please wait...",
 				"settingDefault": "Setting default domain, please wait...",
 				"settingBrandInfo": "Setting domain brand info, please wait...",
-				"testingConnection": "Testing connection, please wait..."
+			"testingConnection": "Testing connection, please wait...",
+			"detecting": "Detecting, please wait..."
 			}
 		}
 	},
@@ -1399,6 +1418,31 @@
 					"disable": "Disable API",
 					"enableContent": "Do you want to enable API settings?",
 					"disableContent": "Do you want to disable API settings?"
+				}
+			},
+			"notifySettings": {
+				"title": "Notification Settings",
+				"blacklist": {
+					"title": "Notify me when an IP/Domain is blacklisted",
+					"alarmSet": "Alarm Set",
+					"alarmSettings": {
+						"title": "Alarm Settings",
+						"name": "Name",
+						"senderEmail": "Sender Email",
+						"smtpPassword": "SMTP Password",
+						"smtpServer": "SMTP Server",
+						"port": "Port",
+						"recipientEmail": "Recipient Email"
+					},
+					"autoCheck": {
+						"title": "Automatically detect blacklists",
+						"confirm": {
+							"enableTitle": "Enable automatic blacklist detection",
+							"disableTitle": "Disable automatic blacklist detection",
+							"enableContent": "Are you sure to start Automatically detect blacklists service?",
+							"disableContent": "Are you sure to stop Automatically detect blacklists service?"
+						}
+					}
 				}
 			}
 		},

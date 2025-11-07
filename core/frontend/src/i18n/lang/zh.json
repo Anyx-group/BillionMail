@@ -819,6 +819,24 @@
 			"title": "设为默认 [{domain}]",
 			"confirm": "确定要将此域名设为默认域名吗？"
 		},
+		"notSpam": {
+			"checkNow": "立即检测",
+			"logs": "日志"
+		},
+		"checkLogs": {
+			"title": "检测日志"
+		},
+		"blacklistDetection": {
+			"title": "黑名单检测",
+			"checking": "正在检测解析到 {ip} 的 {results}，对比 {tested} 个已知黑名单...",
+			"listed": "已列入黑名单数：{count}",
+			"success": "您的 IP 未在 aaPanel 已知的黑名单中",
+			"columns": {
+				"blacklist": "黑名单",
+				"responseIp": "响应 IP",
+				"checkTime": "检测时间"
+			}
+		},
 		"delete": {
 			"title": "删除域名",
 			"confirm": "确定要删除域名【{domain}】吗？",
@@ -1073,7 +1091,8 @@
 				"applyingCert": "正在申请证书，请稍候...",
 				"settingDefault": "正在设置默认域名，请稍候...",
 				"settingBrandInfo": "正在设置域名品牌信息，请稍候...",
-				"testingConnection": "正在测试连接，请稍候..."
+				"testingConnection": "正在测试连接，请稍候...",
+				"detecting": "正在检测，请稍候..."
 			}
 		}
 	},
@@ -1384,6 +1403,31 @@
 					"disable": "关闭API",
 					"enableContent": "是否开启API设置？",
 					"disableContent": "是否关闭API设置？"
+				}
+			},
+			"notifySettings": {
+				"title": "通知设置",
+				"blacklist": {
+					"title": "当IP/域名被列入黑名单时通知我",
+					"alarmSet": "警报设置",
+					"alarmSettings": {
+						"title": "警报设置",
+						"name": "名称",
+						"senderEmail": "发送人邮箱",
+						"smtpPassword": "SMTP密码",
+						"smtpServer": "SMTP服务器",
+						"port": "端口",
+						"recipientEmail": "收件人邮箱"
+					},
+					"autoCheck": {
+						"title": "自动检测黑名单",
+						"confirm": {
+							"enableTitle": "开启黑名单自动检测",
+							"disableTitle": "关闭黑名单自动检测",
+							"enableContent": "确定要开启自动检测黑名单服务吗？",
+							"disableContent": "确定要关闭自动检测黑名单服务吗？"
+						}
+					}
 				}
 			}
 		},

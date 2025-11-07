@@ -56,6 +56,19 @@ export const useSettingsStore = defineStore('SettingsCommonStore', () => {
 		swagger_url: '',
 	})
 
+	const blacklistConfig = ref({
+		alert_enabled: false,
+		auto_scan_enabled: false,
+		alert_settings: {
+			name: '',
+			sender_email: '',
+			smtp_password: '',
+			smtp_server: '',
+			smtp_port: 465,
+			recipient_list: [] as string[],
+		},
+	})
+
 	const checkPasswordStrength = () => {
 		const password = securityForm.newPassword
 		let score = 0
@@ -114,6 +127,10 @@ export const useSettingsStore = defineStore('SettingsCommonStore', () => {
 				apiInfo.api_token = res.api_doc_swagger.api_token
 				apiInfo.swagger_url = res.api_doc_swagger.swagger_url
 			}
+
+			if (res.blacklist_config) {
+				blacklistConfig.value = res.blacklist_config
+			}
 		}
 	}
 
@@ -161,6 +178,7 @@ export const useSettingsStore = defineStore('SettingsCommonStore', () => {
 		ipWhitelistList,
 		currentProxy,
 		apiInfo,
+		blacklistConfig,
 
 		// 方法
 		checkPasswordStrength,
