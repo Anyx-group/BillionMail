@@ -1308,6 +1308,31 @@
 					"enableContent": "API設定を有効にしますか？",
 					"disableContent": "API設定を無効にしますか？"
 				}
+			},
+			"notifySettings": {
+				"title": "通知設定",
+				"blacklist": {
+					"title": "IP/ドメインがブラックリストに登録された場合に通知する",
+					"alarmSet": "アラーム設定",
+					"alarmSettings": {
+						"title": "アラーム設定",
+						"name": "名称",
+						"senderEmail": "送信者メールアドレス",
+						"smtpPassword": "SMTPパスワード",
+						"smtpServer": "SMTPサーバー",
+						"port": "ポート",
+						"recipientEmail": "受信者メールアドレス"
+					},
+					"autoCheck": {
+						"title": "ブラックリストの自動検出",
+						"confirm": {
+							"enableTitle": "ブラックリスト自動検出を有効にする",
+							"disableTitle": "ブラックリスト自動検出を無効にする",
+							"enableContent": "ブラックリスト自動検出サービスを開始しますか？",
+							"disableContent": "ブラックリスト自動検出サービスを停止しますか？"
+						}
+					}
+				}
 			}
 		},
 		"api": {

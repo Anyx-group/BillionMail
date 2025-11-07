@@ -1385,6 +1385,31 @@
 					"enableContent": "是否开启API设置？",
 					"disableContent": "是否关闭API设置？"
 				}
+			},
+			"notifySettings": {
+				"title": "通知设置",
+				"blacklist": {
+					"title": "当IP/域名被列入黑名单时通知我",
+					"alarmSet": "警报设置",
+					"alarmSettings": {
+						"title": "警报设置",
+						"name": "名称",
+						"senderEmail": "发送人邮箱",
+						"smtpPassword": "SMTP密码",
+						"smtpServer": "SMTP服务器",
+						"port": "端口",
+						"recipientEmail": "收件人邮箱"
+					},
+					"autoCheck": {
+						"title": "自动检测黑名单",
+						"confirm": {
+							"enableTitle": "开启黑名单自动检测",
+							"disableTitle": "关闭黑名单自动检测",
+							"enableContent": "确定要开启自动检测黑名单服务吗？",
+							"disableContent": "确定要关闭自动检测黑名单服务吗？"
+						}
+					}
+				}
 			}
 		},
 		"api": {

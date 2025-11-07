@@ -70,4 +70,16 @@ export interface SystemInfo {
 		api_token: string
 		swagger_url: string
 	}
+	blacklist_config: {
+		auto_scan_enabled: boolean
+		alert_enabled: boolean
+		alert_settings: {
+			name: string
+			sender_email: string
+			smtp_password: string
+			smtp_server: string
+			smtp_port: number
+			recipient_list: string[]
+		}
+	}
 }

@@ -1400,6 +1400,31 @@
 					"enableContent": "Do you want to enable API settings?",
 					"disableContent": "Do you want to disable API settings?"
 				}
+			},
+			"notifySettings": {
+				"title": "Notification Settings",
+				"blacklist": {
+					"title": "Notify me when an IP/Domain is blacklisted",
+					"alarmSet": "Alarm Set",
+					"alarmSettings": {
+						"title": "Alarm Settings",
+						"name": "Name",
+						"senderEmail": "Sender Email",
+						"smtpPassword": "SMTP Password",
+						"smtpServer": "SMTP Server",
+						"port": "Port",
+						"recipientEmail": "Recipient Email"
+					},
+					"autoCheck": {
+						"title": "Automatically detect blacklists",
+						"confirm": {
+							"enableTitle": "Enable automatic blacklist detection",
+							"disableTitle": "Disable automatic blacklist detection",
+							"enableContent": "Are you sure to start Automatically detect blacklists service?",
+							"disableContent": "Are you sure to stop Automatically detect blacklists service?"
+						}
+					}
+				}
 			}
 		},
 		"api": {
