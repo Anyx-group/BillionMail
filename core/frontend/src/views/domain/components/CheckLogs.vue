@@ -1,5 +1,5 @@
 <template>
-	<modal title="Check Logs" :width="820" :footer="false">
+	<modal :title="$t('domain.checkLogs.title')" :width="820" :footer="false">
 		<div class="pt-8px">
 			<n-button type="primary" @click="getLogs">
 				{{ $t('common.actions.refresh') }}

@@ -819,6 +819,24 @@
 			"title": "设为默认 [{domain}]",
 			"confirm": "确定要将此域名设为默认域名吗？"
 		},
+		"notSpam": {
+			"checkNow": "立即检测",
+			"logs": "日志"
+		},
+		"checkLogs": {
+			"title": "检测日志"
+		},
+		"blacklistDetection": {
+			"title": "黑名单检测",
+			"checking": "正在检测解析到 {ip} 的 {results}，对比 {tested} 个已知黑名单...",
+			"listed": "已列入黑名单数：{count}",
+			"success": "您的 IP 未在 aaPanel 已知的黑名单中",
+			"columns": {
+				"blacklist": "黑名单",
+				"responseIp": "响应 IP",
+				"checkTime": "检测时间"
+			}
+		},
 		"delete": {
 			"title": "删除域名",
 			"confirm": "确定要删除域名【{domain}】吗？",
@@ -1073,7 +1091,8 @@
 				"applyingCert": "正在申请证书，请稍候...",
 				"settingDefault": "正在设置默认域名，请稍候...",
 				"settingBrandInfo": "正在设置域名品牌信息，请稍候...",
-				"testingConnection": "正在测试连接，请稍候..."
+				"testingConnection": "正在测试连接，请稍候...",
+				"detecting": "正在检测，请稍候..."
 			}
 		}
 	},

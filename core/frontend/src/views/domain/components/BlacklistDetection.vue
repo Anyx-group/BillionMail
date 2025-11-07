@@ -1,5 +1,5 @@
 <template>
-	<modal title="Black List Check" :footer="false" :width="660">
+	<modal :title="$t('domain.blacklistDetection.title')" :footer="false" :width="660">
 		<div class="pt-8px">
 			<n-alert type="default" :show-icon="false">
 				<div class="text-basic text-center">
@@ -7,9 +7,11 @@
 					<b>{{ result.ip || '--' }}</b> against <b>{{ result.tested }}</b> known blacklists...
 				</div>
 			</n-alert>
-			<div class="my-24px text-center font-bold">Listed: {{ result.blacklisted || 0 }}</div>
+			<div class="my-24px text-center font-bold">
+				{{ t('domain.blacklistDetection.listed', { count: result.blacklisted || 0 }) }}
+			</div>
 			<n-alert v-if="!result.blacklisted" class="success-alert" type="success">
-				<span>Your IP does not exist in the blacklist known by aaPanel</span>
+				<span>{{ $t('domain.blacklistDetection.success') }}</span>
 			</n-alert>
 			<n-data-table v-else max-height="200" :columns="columns" :data="result.black_list">
 			</n-data-table>
@@ -23,20 +25,22 @@ import { formatTime } from '@/utils'
 import { useModal } from '@/hooks/modal/useModal'
 import { DomainBlackCheckResult, MailDomain } from '../interface'
 
+const { t } = useI18n()
+
 const result = ref<Partial<DomainBlackCheckResult>>({})
 
 const columns = ref<DataTableColumns<{ blacklist: string; time: number }>>([
 	{
 		key: 'blacklist',
-		title: 'Black List',
+		title: t('domain.blacklistDetection.columns.blacklist'),
 	},
 	{
 		key: 'response',
-		title: 'Response IP',
+		title: t('domain.blacklistDetection.columns.responseIp'),
 	},
 	{
 		key: 'time',
-		title: 'Check Time',
+		title: t('domain.blacklistDetection.columns.checkTime'),
 		render: row => formatTime(row.time),
 	},
 ])
