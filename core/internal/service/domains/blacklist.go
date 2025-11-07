@@ -524,105 +524,265 @@ func buildBlacklistAlertEmailHTML(ip, domain string, result *model.BlacklistChec
 	}
 
 	return fmt.Sprintf(`
-<html>
-<head>
-    <style>
-        body { font-family: Arial, sans-serif; line-height: 1.6; color: #333; }
-        .container { max-width: 600px; margin: 0 auto; padding: 20px; }
-        .header { background: #f44336; color: white; padding: 15px 20px; border-radius: 5px; }
-        .content { padding: 20px; background: #fff3cd; border-radius: 5px; margin-top: 20px; border: 2px solid #f44336; }
-        .alert-box { background: #ffebee; padding: 15px; border-left: 4px solid #f44336; margin: 15px 0; }
-        .info-table { width: 100%%; border-collapse: collapse; margin: 15px 0; }
-        .info-table td { padding: 8px; border-bottom: 1px solid #ddd; }
-        .info-table td:first-child { font-weight: bold; width: 150px; }
-        .blacklist-list { background: #fff; padding: 15px; border-radius: 5px; margin: 15px 0; }
-        .blacklist-list ul { list-style: none; padding-left: 0; }
-        .blacklist-list li { padding: 5px 0; color: #d32f2f; }
-        .footer { margin-top: 20px; padding-top: 20px; border-top: 1px solid #ddd; font-size: 12px; color: #777; }
-        .warning { color: #f44336; font-weight: bold; font-size: 18px; }
-        .action-needed { background: #f44336; color: white; padding: 10px; border-radius: 5px; margin: 15px 0; text-align: center; }
-    </style>
-</head>
-<body>
-    <div class="container">
-        <div class="header">
-            <h2>⚠️ Blacklist Alert - Action Required</h2>
-        </div>
-        <div class="content">
-            <div class="alert-box">
-                <p class="warning">⚠️ Your domain has been detected on email blacklists!</p>
-                <p>Immediate action is required to prevent email delivery issues.</p>
-            </div>
+<!DOCTYPE html>
+<html lang="en">
+	<head>
+		<meta charset="UTF-8" />
+		<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+		<title>Blacklist Detection Alert</title>
+		<style>
+			p {
+				margin: 0;
+			}
+			body {
+				background: #f5f5f5;
+				margin: 0;
+				padding: 20px;
+				font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+			}
+			.container {
+				max-width: 620px;
+				margin: 40px auto;
+				background: white;
+				border-radius: 12px;
+				box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+				overflow: hidden;
+			}
+			.header {
+				text-align: center;
+				padding: 40px 30px 30px;
+				background: linear-gradient(135deg, #fef3f2, #fdf2f8);
+			}
+			.alert-icon {
+				width: 80px;
+				height: 80px;
+				background: linear-gradient(135deg, #dc2626, #b91c1c);
+				border-radius: 50%%;
+				display: flex;
+				align-items: center;
+				justify-content: center;
+				margin: 0 auto;
+				box-shadow: 0 4px 15px rgba(220, 38, 38, 0.3);
+			}
+			.content {
+				padding: 32px 40px;
+			}
+			.content h2 {
+				margin-top: 0;
+				margin-bottom: 24px;
+				color: #1f2937;
+				font-size: 24px;
+				font-weight: 600;
+				text-align: center;
+			}
+			.content h3 {
+				margin-top: 0;
+				margin-bottom: 16px;
+				color: #dc2626;
+				font-size: 18px;
+				font-weight: 600;
+			}
+			.content p {
+				margin-top: 12px;
+				color: #6b7280;
+				font-size: 13px;
+				line-height: 1.5;
+			}
+			.alert-box {
+				background: #fef3f2;
+				border-left: 4px solid #dc2626;
+				padding: 16px 20px;
+				margin: 24px 0;
+				border-radius: 4px;
+			}
+			.domain-info {
+				display: grid;
+				grid-template-columns: 1fr 1fr 1fr;
+				gap: 20px;
+				margin: 20px 0;
+				padding: 20px;
+				background: #f9fafb;
+				border-radius: 8px;
+			}
+			.label {
+				font-weight: 600;
+				color: #4b5563;
+				display: block;
+				margin-bottom: 4px;
+				font-size: 13px;
+			}
+			.value {
+				color: #1f2937;
+				font-weight: 500;
+				font-size: 15px;
+			}
+			.severity-high {
+				color: #dc2626;
+				font-weight: 600;
+			}
+			.results-grid {
+				display: grid;
+				grid-template-columns: repeat(4, 1fr);
+				gap: 12px;
+				margin: 20px 0;
+			}
+			.result-item {
+				text-align: center;
+				padding: 16px 8px;
+				border-radius: 8px;
+				background: #f9fafb;
+			}
+			.result-value {
+				font-size: 24px;
+				font-weight: 700;
+				margin-bottom: 4px;
+			}
+			.result-label {
+				font-size: 12px;
+				color: #6b7280;
+			}
+			.result-passed {
+				color: #10b981;
+			}
+			.result-blacklisted {
+				color: #dc2626;
+			}
+			.blacklisted-item {
+				background: #fef3f2;
+				padding: 12px 16px;
+				margin: 8px 0;
+				border-radius: 6px;
+				border-left: 3px solid #dc2626;
+			}
+			.action-box {
+				background: #f0fdf4;
+				border: 1px solid #bbf7d0;
+				border-radius: 8px;
+				padding: 20px;
+				margin: 24px 0;
+			}
+			.action-list {
+				margin: 16px 0;
+				padding-left: 20px;
+			}
+			.action-list li {
+				margin-bottom: 8px;
+				color: #374151;
+				line-height: 1.5;
+				font-size: 13px;
+			}
+			.footer {
+				text-align: center;
+				padding: 20px 30px 30px;
+				color: #9ca3af;
+				font-size: 12px;
+				background: #f9fafb;
+				border-top: 1px solid #f3f4f6;
+			}
+			.footer a {
+				color: #9ca3af;
+				text-decoration: underline;
+			}
+			.footer a:hover {
+				color: #6b7280;
+			}
+			@media only screen and (max-width: 700px) {
+				.container {
+					max-width: 95%%;
+				}
+				.content {
+					padding: 25px 20px;
+				}
+				.domain-info,
+				.results-grid {
+					grid-template-columns: 1fr;
+				}
+				.button-container {
+					flex-direction: column;
+				}
+			}
+		</style>
+	</head>
+	<body>
+		<div class="container">
+			<div class="header">
+				<div class="alert-icon">
+					<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="white" width="40" height="40">
+						<path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 15h-2v-2h2v2zm0-4h-2V7h2v6z" />
+					</svg>
+				</div>
+			</div>
+			<div class="content">
+				<h2>Blacklist Detection Alert</h2>
 
-            <h3>Domain Information</h3>
-            <table class="info-table">
-                <tr>
-                    <td>Domain:</td>
-                    <td><strong>%s</strong></td>
-                </tr>
-                <tr>
-                    <td>IP Address:</td>
-                    <td><strong>%s</strong></td>
-                </tr>
-                <tr>
-                    <td>Detection Time:</td>
-                    <td>%s</td>
-                </tr>
-            </table>
+				<div class="alert-box">Your domain has been detected on email blacklists!</div>
 
-            <h3>Check Results</h3>
-            <table class="info-table">
-                <tr>
-                    <td>Total Tested:</td>
-                    <td>%d blacklists</td>
-                </tr>
-                <tr>
-                    <td>Passed:</td>
-                    <td style="color: green;">%d ✓</td>
-                </tr>
-                <tr>
-                    <td>Invalid:</td>
-                    <td>%d</td>
-                </tr>
-                <tr>
-                    <td>Blacklisted:</td>
-                    <td style="color: red; font-weight: bold;">%d ✗</td>
-                </tr>
-            </table>
+				<h3>Domain Information</h3>
+				<div class="domain-info">
+					<div class="info-item">
+						<span class="label">Domain</span>
+						<span class="value" id="domain-value"> %s </span>
+					</div>
+					<div class="info-item">
+						<span class="label">IP Address</span>
+						<span class="value" id="ip-value"> %s </span>
+					</div>
+					<div class="info-item">
+						<span class="label">Detection Time</span>
+						<span class="value" id="detection-time-value"> %s </span>
+					</div>
+				</div>
 
-            <div class="blacklist-list">
-                <h3>Blacklisted On:</h3>
-                <ul>
-%s
-                </ul>
-            </div>
+				<h3>Detection Results</h3>
+				<div class="results-grid">
+					<div class="result-item">
+						<div class="result-value" id="total-tested-value"> %d </div>
+						<div class="result-label">Total Blacklists</div>
+					</div>
+					<div class="result-item">
+						<div class="result-value result-passed" id="passed-value"> %d </div>
+						<div class="result-label">Passed</div>
+					</div>
+					<div class="result-item">
+						<div class="result-value" id="invalid-value"> %d </div>
+						<div class="result-label">Invalid</div>
+					</div>
+					<div class="result-item">
+						<div class="result-value result-blacklisted" id="blacklisted-value"> %d </div>
+						<div class="result-label">Blacklisted</div>
+					</div>
+				</div>
 
-            <div class="action-needed">
-                <strong>Action Needed:</strong> Please investigate and resolve these blacklist issues immediately.
-            </div>
+				<h3>Blacklisting Providers</h3>
+				<div id="blacklisted-list">
+					<div class="blacklisted-item">%s</div>
 
-            <h3>Recommended Actions:</h3>
-            <ol>
-                <li>Check recent email sending activities</li>
-                <li>Review server security and spam policies</li>
-                <li>Submit delisting requests to affected blacklists</li>
-                <li>Monitor email delivery rates</li>
-                <li>Contact support if assistance is needed</li>
-            </ol>
+				</div>
 
-            <p><strong>View detailed log:</strong> <code>%s</code></p>
-        </div>
-        <div class="footer">
-            <p>This is an automated alert from BillionMail Blacklist Monitoring System.</p>
-            <p>Alert Time: %s</p>
-            <p>If you have resolved this issue, you can ignore this alert.</p>
-        </div>
-    </div>
-</body>
+				<div class="action-box">
+					<h3>Recommended Actions</h3>
+					<p>To protect your domain reputation, please perform the following actions immediately:</p>
+					<ul class="action-list">
+						<li>Review recent email content and sending frequency</li>
+						<li>Ensure there is no unauthorized sending activity</li>
+						<li>Contact the relevant blacklist providers to understand delisting procedures</li>
+						<li>Verify domain configuration and SPF/DKIM/DMARC records</li>
+					</ul>
+				</div>
+			</div>
+
+			<div class="footer">
+				<div>
+					<span>Powered by </span>
+					<a href="https://www.billionmail.com/" target="_blank">BillionMail</a>
+				</div>
+			</div>
+		</div>
+	</body>
 </html>
+
 `, domain, ip, time.Unix(result.Time, 0).Format("2006-01-02 15:04:05"),
 		result.Tested, result.Passed, result.Invalid, result.Blacklisted,
 		blacklistItems,
-		GetBlacklistLogPath(domain),
-		time.Now().Format("2006-01-02 15:04:05"))
+	)
 }

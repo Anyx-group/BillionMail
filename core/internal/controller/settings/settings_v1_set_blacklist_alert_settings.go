@@ -161,44 +161,203 @@ func sendTestEmailWithMailService(ctx context.Context, settings *v1.SetBlacklist
 
 func buildTestEmailHTML(settings *v1.SetBlacklistAlertSettingsReq) string {
 	return fmt.Sprintf(`
-<html>
-<head>
-    <style>
-        body { font-family: Arial, sans-serif; line-height: 1.6; color: #333; }
-        .container { max-width: 600px; margin: 0 auto; padding: 20px; }
-        .header { background: #4CAF50; color: white; padding: 10px 20px; border-radius: 5px; }
-        .content { padding: 20px; background: #f9f9f9; border-radius: 5px; margin-top: 20px; }
-        .footer { margin-top: 20px; padding-top: 20px; border-top: 1px solid #ddd; font-size: 12px; color: #777; }
-        .success { color: #4CAF50; font-weight: bold; }
-        ul { list-style: none; padding-left: 0; }
-        ul li { padding: 5px 0; }
-    </style>
-</head>
-<body>
-    <div class="container">
-        <div class="header">
-            <h2>✅ Blacklist Alert Configuration Test</h2>
-        </div>
-        <div class="content">
-            <p>Hello,</p>
-            <p>This is a test email from BillionMail blacklist monitoring system.</p>
-            <p class="success">✓ Your alert settings have been configured successfully!</p>
-            <p><strong>Configuration Details:</strong></p>
-            <ul>
-                <li><strong>Configuration Name:</strong> %s</li>
-                <li><strong>Sender Email:</strong> %s</li>
-                <li><strong>SMTP Server:</strong> %s:%d</li>
-                <li><strong>Recipients:</strong> %d email(s)</li>
-            </ul>
-            <p>When a domain is detected on a blacklist, you will receive an alert email similar to this one.</p>
-            <p><strong>Test Time:</strong> %s</p>
-        </div>
-        <div class="footer">
-            <p>This is an automated message from BillionMail Blacklist Monitoring System.</p>
-            <p>If you did not configure this alert, please contact your system administrator.</p>
-        </div>
-    </div>
-</body>
+<!DOCTYPE html>
+<html lang="en">
+	<head>
+		<meta charset="UTF-8" />
+		<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+		<title>Alert Settings Configured Successfully</title>
+		<style>
+			p {
+				margin: 0;
+			}
+			body {
+				background: #f5f5f5;
+				margin: 0;
+				padding: 20px;
+				font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+			}
+			.container {
+				max-width: 500px;
+				margin: 40px auto;
+				background: white;
+				border-radius: 12px;
+				box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+				overflow: hidden;
+			}
+			.header {
+				text-align: center;
+				padding: 40px 30px 30px;
+				background: linear-gradient(135deg, #e3fcf0, #b2e8d1);
+			}
+			.success-icon {
+				width: 80px;
+				height: 80px;
+				background: linear-gradient(135deg, #10b981, #059669);
+				border-radius: 50%%;
+				display: flex;
+				align-items: center;
+				justify-content: center;
+				margin: 0 auto;
+				box-shadow: 0 4px 15px rgba(16, 185, 129, 0.3);
+			}
+			.content {
+				padding: 32px 40px;
+				text-align: center;
+			}
+			.content h2 {
+				margin-top: 0;
+				margin-bottom: 32px;
+				color: #1f2937;
+				font-size: 24px;
+				font-weight: 600;
+			}
+			.content p {
+				margin-top: 12px;
+				color: #6b7280;
+				font-size: 14px;
+				line-height: 1.5;
+			}
+			.config-details {
+				background: #f8fafc;
+				border-radius: 8px;
+				padding: 20px;
+				margin: 24px 0;
+				text-align: left;
+				border-left: 4px solid #e3fcf0;
+			}
+			.config-title {
+				font-weight: 600;
+				color: #374151;
+				margin-bottom: 16px;
+				font-size: 16px;
+			}
+			.config-item {
+				display: flex;
+				margin-bottom: 12px;
+				padding-bottom: 12px;
+				border-bottom: 1px solid #e5e7eb;
+			}
+			.config-item:last-child {
+				margin-bottom: 0;
+				padding-bottom: 0;
+				border-bottom: none;
+			}
+			.config-label {
+				flex: 0 0 140px;
+				font-weight: 500;
+				color: #6b7280;
+				font-size: 14px;
+			}
+			.config-value {
+				flex: 1;
+				color: #1f2937;
+				font-weight: 500;
+				font-size: 14px;
+			}
+			.button {
+				display: inline-block;
+				background: #10b981;
+				color: white;
+				padding: 12px 24px;
+				text-decoration: none;
+				border-radius: 6px;
+				font-size: 16px;
+				font-weight: 500;
+				transition: all 0.2s ease;
+				margin-top: 16px;
+				box-shadow: 0 2px 5px rgba(16, 185, 129, 0.2);
+			}
+			.button:hover {
+				background: #059669;
+				transform: translateY(-2px);
+				box-shadow: 0 4px 8px rgba(16, 185, 129, 0.3);
+			}
+			.footer {
+				text-align: center;
+				padding: 20px 30px 30px;
+				color: #9ca3af;
+				font-size: 12px;
+				background: #f9fafb;
+				border-top: 1px solid #f3f4f6;
+			}
+			.footer a {
+				color: #9ca3af;
+				text-decoration: underline;
+			}
+			.footer a:hover {
+				color: #6b7280;
+			}
+			.test-info {
+				background: #e3fcf0;
+				border-radius: 6px;
+				padding: 12px 16px;
+				margin: 20px 0;
+				display: flex;
+				align-items: center;
+				justify-content: center;
+			}
+			.test-info .config-label {
+				flex: none;
+				font-weight: 600;
+				color: #374151;
+				margin-right: 8px;
+			}
+			.test-info .config-value {
+				flex: none;
+				font-weight: 600;
+				color: #059669;
+			}
+		</style>
+	</head>
+	<body>
+		<div class="container">
+			<div class="header">
+				<div class="success-icon">
+					<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="white" width="40px" height="40px">
+						<path d="M0 0h24v24H0z" fill="none" />
+						<path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z" />
+					</svg>
+				</div>
+			</div>
+			<div class="content">
+				<h2>Your alert settings have been configured successfully!</h2>
+
+				<div class="config-details">
+					<div class="config-title">Configuration Details:</div>
+					<div class="config-item">
+						<div class="config-label">Configuration Name:</div>
+						<div class="config-value"> %s</div>
+					</div>
+					<div class="config-item">
+						<div class="config-label">Sender Email:</div>
+						<div class="config-value"> %s</div>
+					</div>
+					<div class="config-item">
+						<div class="config-label">SMTP Server:</div>
+						<div class="config-value">%s:%d</div>
+					</div>
+					<div class="config-item">
+						<div class="config-label">Recipients:</div>
+						<div class="config-value"> %d email(s)</div>
+					</div>
+				</div>
+
+				<p>When a domain is detected on a blacklist, you will receive an alert email similar to this one.</p>
+
+				<div class="test-info">
+					<div class="config-label">Test Time:</div>
+					<div class="config-value"> %s</div>
+				</div>
+			</div>
+			<div class="footer">
+				<div>
+					<span>Powered by </span>
+					<a href="https://www.billionmail.com/" target="_blank">BillionMail</a>
+				</div>
+			</div>
+		</div>
+	</body>
 </html>
 `, settings.Name, settings.SenderEmail, settings.SMTPServer, settings.SMTPPort,
 		len(settings.RecipientList), time.Now().Format("2006-01-02 15:04:05"))
