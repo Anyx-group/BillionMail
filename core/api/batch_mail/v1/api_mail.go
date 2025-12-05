@@ -11,6 +11,7 @@ type ApiTemplates struct {
 	ApiKey            string `json:"api_key" dc:"api key"`
 	ApiName           string `json:"api_name" dc:"api name"`
 	TemplateId        int    `json:"template_id" dc:"template id"`
+	GroupId           int    `json:"group_id" dc:"group id"`
 	Subject           string `json:"subject" dc:"subject"`
 	Addresser         string `json:"addresser" dc:"addresser"`
 	FullName          string `json:"full_name" dc:"full name"`
@@ -46,6 +47,7 @@ type ApiTemplatesListReq struct {
 
 type ApiTemplatesInfo struct {
 	ApiTemplates
+	GroupId      int     `json:"group_id" dc:"group id"`
 	SendCount    int     `json:"send_count" dc:"send count"`
 	SuccessCount int     `json:"success_count" dc:"success count"`
 	FailCount    int     `json:"fail_count" dc:"fail count"`
@@ -93,6 +95,7 @@ type ApiTemplatesCreateReq struct {
 	Authorization string `json:"authorization" dc:"Authorization" in:"header"`
 	ApiName       string `json:"api_name" dc:"api name"`
 	TemplateId    int    `json:"template_id" dc:"template id"`
+	GroupId       int    `json:"group_id" dc:"Associated group ID"`
 	Subject       string `json:"subject" dc:"subject"`
 	Addresser     string `json:"addresser" dc:"addresser"`
 	FullName      string `json:"full_name" dc:"full name"`
@@ -115,6 +118,7 @@ type ApiTemplatesUpdateReq struct {
 	ID            int    `json:"id" dc:"id"`
 	ApiName       string `json:"api_name" dc:"api name"`
 	TemplateId    int    `json:"template_id" dc:"template id"`
+	GroupId       int    `json:"group_id" dc:"Associated group ID"`
 	Subject       string `json:"subject" dc:"subject"`
 	Addresser     string `json:"addresser" dc:"addresser"`
 	FullName      string `json:"full_name" dc:"full name"`

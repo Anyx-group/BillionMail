@@ -56,6 +56,7 @@ func (c *ControllerV1) ApiTemplatesCreate(ctx context.Context, req *v1.ApiTempla
 		"api_key":              apiKey,
 		"api_name":             req.ApiName,
 		"template_id":          req.TemplateId,
+		"group_id":             req.GroupId,
 		"subject":              req.Subject,
 		"addresser":            req.Addresser,
 		"full_name":            req.FullName,

@@ -156,6 +156,7 @@ type ApiTemplates struct {
 	ApiKey            string `json:"api_key" dc:"api key"`
 	ApiName           string `json:"api_name" dc:"api name"`
 	TemplateId        int    `json:"template_id" dc:"template id"`
+	GroupId           int    `json:"group_id" dc:"group id"`
 	Subject           string `json:"subject" dc:"subject"`
 	Addresser         string `json:"addresser" dc:"addresser"`
 	FullName          string `json:"full_name" dc:"full name"`
