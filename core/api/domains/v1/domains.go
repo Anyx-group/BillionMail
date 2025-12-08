@@ -15,12 +15,13 @@ type DNSRecord struct {
 }
 
 type DNSRecords struct {
-	SPF   DNSRecord `json:"spf"          dc:"SPF record"`
-	DKIM  DNSRecord `json:"dkim"         dc:"DKIM record"`
-	DMARC DNSRecord `json:"dmarc"         dc:"DMARC record"`
-	MX    DNSRecord `json:"mx"   dc:"MX record"`
-	A     DNSRecord `json:"a"    dc:"A record"`
-	PTR   DNSRecord `json:"ptr"        dc:"PTR record"`
+	SPF       DNSRecord `json:"spf"          dc:"SPF record"`
+	DKIM      DNSRecord `json:"dkim"         dc:"DKIM record"`
+	DKIMShort DNSRecord `json:"dkim_short"   dc:"DKIM short record"`
+	DMARC     DNSRecord `json:"dmarc"        dc:"DMARC record"`
+	MX        DNSRecord `json:"mx"           dc:"MX record"`
+	A         DNSRecord `json:"a"            dc:"A record"`
+	PTR       DNSRecord `json:"ptr"          dc:"PTR record"`
 }
 
 type CertInfo struct {

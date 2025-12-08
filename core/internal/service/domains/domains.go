@@ -397,7 +397,7 @@ func FreshRecords(ctx context.Context, domain ...string) {
 
 	for _, d := range domains {
 		// goroutine for each record type
-		wg.Add(6) // total of 6 record types
+		wg.Add(7) // total of 7 record types
 
 		// retrieve A record
 		go func(d string) {
@@ -443,6 +443,17 @@ func FreshRecords(ctx context.Context, domain ...string) {
 			}
 		}(d)
 
+		// retrieve DKIM short record
+		go func(d string) {
+			defer wg.Done()
+			dr, err := GetDKIMShortRecord(d, true)
+			if err != nil {
+				g.Log().Error(ctx, "Failed to get DKIM short record for domain %s: %v", d, err)
+			} else {
+				public.SetCache(buildCacheKey(d, "DKIM_SHORT"), dr, cacheSeconds)
+			}
+		}(d)
+
 		// retrieve DMARC record
 		go func(d string) {
 			defer wg.Done()
@@ -473,6 +484,15 @@ func FreshRecords(ctx context.Context, domain ...string) {
 
 // GetDKIMRecord retrieves the DKIM record for a given domain.
 func GetDKIMRecord(domain string, validateImmediate bool) (record v1.DNSRecord, err error) {
+	return getDKIMRecordWithKeySize(domain, "default", 2048, validateImmediate)
+}
+
+// GetDKIMShortRecord retrieves the short DKIM record for a given domain.
+func GetDKIMShortRecord(domain string, validateImmediate bool) (record v1.DNSRecord, err error) {
+	return getDKIMRecordWithKeySize(domain, "short", 1024, validateImmediate)
+}
+
+func getDKIMRecordWithKeySize(domain, selector string, keySize int, validateImmediate bool) (record v1.DNSRecord, err error) {
 	// Create DKIM directory
 	dkimPath := public.AbsPath(filepath.Join(consts.RSPAMD_LIB_PATH, "dkim", domain))
 
@@ -482,18 +502,16 @@ func GetDKIMRecord(domain string, validateImmediate bool) (record v1.DNSRecord, 
 	}
 
 	// Check if DKIM private and public key files exist
-	dkimPriPath := filepath.Join(dkimPath, "default.private")
-	dkimPubPath := filepath.Join(dkimPath, "default.pub")
+	dkimPriPath := filepath.Join(dkimPath, selector+".private")
+	dkimPubPath := filepath.Join(dkimPath, selector+".pub")
 
 	var dk *docker.DockerAPI
 
 	dk, err = docker.NewDockerAPI()
-
 	if err != nil {
 		err = fmt.Errorf("Failed to connect to Docker API: %v", err)
 		return
 	}
-
 	defer dk.Close()
 
 	// Generate new keys if they don't exist
@@ -502,8 +520,7 @@ func GetDKIMRecord(domain string, validateImmediate bool) (record v1.DNSRecord, 
 		defer mutex.Unlock()
 
 		var res *v2.ExecResult
-		res, err = dk.ExecCommandByName(context.Background(), consts.SERVICES.Rspamd, []string{"rspamadm", "dkim_keygen", "-s", "'default'", "-b", "2048", "-d", domain, "-k", fmt.Sprintf("/var/lib/rspamd/dkim/%s/default.private", domain)}, "root")
-
+		res, err = dk.ExecCommandByName(context.Background(), consts.SERVICES.Rspamd, []string{"rspamadm", "dkim_keygen", "-s", selector, "-b", fmt.Sprintf("%d", keySize), "-d", domain, "-k", fmt.Sprintf("/var/lib/rspamd/dkim/%s/%s.private", domain, selector)}, "root")
 		if err != nil {
 			err = fmt.Errorf("Failed to generate DKIM key pair: %v", err)
 			return
@@ -511,7 +528,6 @@ func GetDKIMRecord(domain string, validateImmediate bool) (record v1.DNSRecord, 
 
 		if res != nil {
 			_, err = public.WriteFile(dkimPubPath, res.Output)
-
 			if err != nil {
 				err = fmt.Errorf("Failed to write DKIM public key: %v", err)
 				return
@@ -526,17 +542,22 @@ func GetDKIMRecord(domain string, validateImmediate bool) (record v1.DNSRecord, 
 		}
 
 		// build DKIM Sign config
-		signConf := fmt.Sprintf(`#%s_DKIM_BEGIN
+		signConf := fmt.Sprintf(`
+#%s_DKIM_BEGIN
 %s {
    selectors [
     {
       path: "/var/lib/rspamd/dkim/%s/default.private";
       selector: "default";
+    },
+    {
+      path: "/var/lib/rspamd/dkim/%s/short.private";
+      selector: "short";
     }
   ]
 }
 #%s_DKIM_END
-`, domain, domain, domain, domain)
+`, domain, domain, domain, domain, domain)
 
 		// Write DKIM sign config to file
 		signConfPath := public.AbsPath(filepath.Join(consts.RSPAMD_LOCAL_D_PATH, "dkim_signing.conf"))
@@ -549,17 +570,21 @@ domain {
 
 		if public.FileExists(signConfPath) {
 			signContent, err = public.ReadFile(signConfPath)
-
 			if err != nil {
 				err = fmt.Errorf("Failed to read DKIM sign config: %v", err)
 				return
 			}
 		}
 
+		// Remove old config block if it exists
+		pattern := fmt.Sprintf(`(?s)#%s_DKIM_BEGIN.*?#%s_DKIM_END\s*`, domain, domain)
+		signContent, err = gregex.ReplaceString(pattern, "", signContent)
+		if err != nil {
+			return
+		}
+
 		signContent = strings.Replace(signContent, "#BT_DOMAIN_DKIM_END", signConf+"\n#BT_DOMAIN_DKIM_END", 1)
-
 		_, err = public.WriteFile(signConfPath, signContent)
-
 		if err != nil {
 			err = fmt.Errorf("Failed to write DKIM sign config: %v", err)
 			return
@@ -567,7 +592,6 @@ domain {
 
 		// Restart rspamd service
 		err = dk.RestartContainerByName(context.Background(), consts.SERVICES.Rspamd)
-
 		if err != nil {
 			err = fmt.Errorf("Failed to restart rspamd container: %v", err)
 			return
@@ -577,7 +601,6 @@ domain {
 	// DKIM public key is typically stored in a specific location in the container or host
 	// Assuming we use docker exec to read the DKIM public key from the rspamd container
 	dkimPub, err := public.ReadFile(dkimPubPath)
-
 	if err != nil {
 		err = fmt.Errorf("Cannot read DKIM public key: %v", err)
 		return
@@ -598,7 +621,6 @@ domain {
 	} else {
 		var ms [][]string
 		ms, err = gregex.MatchAllString(`"([^"\r\n]+)"`, dkimRecord)
-
 		if err != nil {
 			err = fmt.Errorf("Failed to parse DKIM record: %v", err)
 			return
@@ -622,7 +644,7 @@ domain {
 
 	record = v1.DNSRecord{
 		Type:  "TXT",
-		Host:  "default._domainkey",
+		Host:  selector + "._domainkey",
 		Value: dkimRecord,
 	}
 
@@ -794,6 +816,16 @@ func GetRecordsInCache(domain string) (records v1.DNSRecords) {
 		records.DKIM, _ = GetDKIMRecord(domain, false)
 	}
 
+	// Get DKIM short record from cache
+	dkimShortRecord := public.GetCache(buildCacheKey(domain, "DKIM_SHORT"))
+	if dkimShortRecord != nil {
+		if v, ok := dkimShortRecord.(v1.DNSRecord); ok {
+			records.DKIMShort = v
+		}
+	} else {
+		records.DKIMShort, _ = GetDKIMShortRecord(domain, false)
+	}
+
 	// Get DMARC record from cache
 	dmarcRecord := public.GetCache(buildCacheKey(domain, "DMARC"))
 
@@ -826,66 +858,78 @@ func RepairDKIMSigningConfig(ctx context.Context) error {
 		g.Log().Debug(ctx, "Repairing DKIM signing config completed.")
 	}()
 
-	// Read the DKIM signing configuration file
+	// 1. Get all domains
+	ds, err := All(ctx)
+	if err != nil {
+		return fmt.Errorf("failed to get all domains: %v", err)
+	}
+
+	// 2. Build the full DKIM config content
+	var allSignConfBlocks strings.Builder
+	for _, d := range ds {
+		// For each domain, generate the correct config block with both selectors
+		signConf := fmt.Sprintf(`
+#%s_DKIM_BEGIN
+%s {
+   selectors [
+    {
+      path: "/var/lib/rspamd/dkim/%s/default.private";
+      selector: "default";
+    },
+    {
+      path: "/var/lib/rspamd/dkim/%s/short.private";
+      selector: "short";
+    }
+  ]
+}
+#%s_DKIM_END
+`, d.Domain, d.Domain, d.Domain, d.Domain, d.Domain)
+		allSignConfBlocks.WriteString(signConf)
+	}
+
+	// 3. Construct the final dkim_signing.conf content
 	signConfPath := public.AbsPath(filepath.Join(consts.RSPAMD_LOCAL_D_PATH, "dkim_signing.conf"))
-	signContent, err := public.ReadFile(signConfPath)
+	finalSignContent := fmt.Sprintf(`sign_headers = "from:sender:reply-to:subject:date:message-id:to:cc:mime-version:content-type:content-transfer-encoding:content-language:resent-to:resent-cc:resent-from:resent-sender:resent-message-id:in-reply-to:references:list-id:list-help:list-owner:list-unsubscribe:list-subscribe:list-post:list-unsubscribe-post:disposition-notification-to:disposition-notification-options:original-recipient:openpgp:autocrypt";
 
+domain {
+#BT_DOMAIN_DKIM_BEGIN
+%s
+#BT_DOMAIN_DKIM_END
+}`, allSignConfBlocks.String())
+
+	// 4. Write the new content to the file, overwriting the old one
+	_, err = public.WriteFile(signConfPath, finalSignContent)
 	if err != nil {
-		return fmt.Errorf("Failed to read DKIM signing config: %v", err)
+		return fmt.Errorf("failed to write DKIM signing config: %v", err)
 	}
 
-	// Check if the config contains the DKIM domain section
-	if !strings.Contains(signContent, "#BT_DOMAIN_DKIM_BEGIN") || !strings.Contains(signContent, "#BT_DOMAIN_DKIM_END") {
-		return fmt.Errorf("DKIM signing config is missing domain sections")
-	}
-
-	// fix the invalid selector private key path
-	signContent = strings.ReplaceAll(signContent, public.AbsPath(consts.RSPAMD_LIB_PATH), "/var/lib/rspamd")
-
-	// Write the repaired content back to the file
-	_, err = public.WriteFile(signConfPath, signContent)
-
-	if err != nil {
-		return fmt.Errorf("Failed to write DKIM signing config: %v", err)
-	}
-
-	// update dkim files permission to 0644
-	filepath.Walk(filepath.Join(public.AbsPath(consts.RSPAMD_LIB_PATH), "dkim"), func(path string, info os.FileInfo, err error) error {
+	// 5. Ensure correct file permissions
+	err = filepath.Walk(filepath.Join(public.AbsPath(consts.RSPAMD_LIB_PATH), "dkim"), func(path string, info os.FileInfo, err error) error {
 		if err != nil {
 			return err
 		}
-
 		if info.IsDir() {
-			// set directory permission to 0755
-			err = os.Chmod(path, 0755)
-
-			if err != nil {
-				return fmt.Errorf("Failed to change DKIM directory permissions: %v", err)
-			}
+			return os.Chmod(path, 0755)
 		}
-
 		if strings.HasSuffix(path, ".private") || strings.HasSuffix(path, ".pub") {
-			err = os.Chmod(path, 0644)
-
-			if err != nil {
-				return fmt.Errorf("Failed to change DKIM file permissions: %v", err)
-			}
+			return os.Chmod(path, 0644)
 		}
-
 		return nil
 	})
-
-	// Restart rspamd service
-	dk, err := docker.NewDockerAPI()
 	if err != nil {
-		return fmt.Errorf("Failed to connect to Docker API: %v", err)
+		return fmt.Errorf("failed to change DKIM file permissions: %v", err)
 	}
 
+	// 6. Restart rspamd service
+	dk, err := docker.NewDockerAPI()
+	if err != nil {
+		return fmt.Errorf("failed to connect to Docker API: %v", err)
+	}
 	defer dk.Close()
 
 	err = dk.RestartContainerByName(ctx, consts.SERVICES.Rspamd)
 	if err != nil {
-		return fmt.Errorf("Failed to restart rspamd container: %v", err)
+		return fmt.Errorf("failed to restart rspamd container: %v", err)
 	}
 
 	return nil
