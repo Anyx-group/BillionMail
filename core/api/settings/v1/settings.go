@@ -97,6 +97,8 @@ type SystemConfig struct {
 
 	// blacklist config
 	BlacklistConfig BlacklistConfig `json:"blacklist_config" dc:"blacklist configuration"`
+	// Data retention days
+	RetentionDays int `json:"retention_days" dc:"Number of days to keep log backup"`
 }
 
 type BlacklistConfig struct {
