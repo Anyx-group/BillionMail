@@ -1,39 +1,30 @@
 # docker-compose.coolify.yml
-# Geoptimaliseerd voor Coolify deployment
 version: "3.9"
 
 services:
-  # BillionMail Core Service
   billionmail:
-    image: billionmail/billionmail:latest
+    # BUILD vanaf source in plaats van pull
+    build:
+      context: .
+      dockerfile: Dockerfiles/Dockerfile
+      args:
+        - VERSION=latest
+    
     container_name: billionmail-core
     hostname: ${BILLIONMAIL_HOSTNAME:-mail.example.com}
     
     environment:
-      # Basis configuratie
       - TZ=${TZ:-Europe/Amsterdam}
       - FAIL2BAN_INIT=${FAIL2BAN_INIT:-y}
-      - BILLIONMAIL_HOSTNAME=${BILLIONMAIL_HOSTNAME:-mail.example.com}
+      - BILLIONMAIL_HOSTNAME=${BILLIONMAIL_HOSTNAME}
       - ADMIN_EMAIL=${ADMIN_EMAIL:-admin@example.com}
       - ADMIN_PASSWORD=${ADMIN_PASSWORD}
       
-      # Database
-      - DB_HOST=db
-      - DB_PORT=3306
-      - DB_NAME=${DB_NAME:-billionmail}
-      - DB_USER=${DB_USER:-billionmail}
-      - DB_PASSWORD=${DB_PASSWORD}
-      
-      # SMTP Configuratie
-      - SMTP_RELAY_HOST=${SMTP_RELAY_HOST:-}
-      - SMTP_RELAY_PORT=${SMTP_RELAY_PORT:-587}
-      
     volumes:
-      # Persistent storage
-      - billionmail_data:/opt/billionmail/core/data
-      - vmail_data:/opt/billionmail/vmail-data
-      - ./ssl:/opt/billionmail/ssl
-      - ./conf:/opt/billionmail/conf
+      - billionmail_core:/opt/billionmail/core/data
+      - billionmail_vmail:/opt/billionmail/vmail-data
+      - ./ssl:/opt/billionmail/ssl:rw
+      - ./conf:/opt/billionmail/conf:rw
       - /var/run/docker.sock:/var/run/docker.sock:ro
       
     cap_add:
@@ -41,95 +32,40 @@ services:
       - NET_ADMIN
       - NET_RAW
       
-    # BELANGRIJK: Geen ports declareren! Coolify doet dit via Traefik
-    # ports:
-    #   - "80:80"     # <- NIET doen
-    #   - "443:443"   # <- NIET doen
+    # Mail ports (NIET via Traefik)
+    ports:
+      - "25:25"
+      - "465:465"
+      - "587:587"
+      - "993:993"
     
-    # Coolify Magic Labels
+    # Coolify Labels voor web interface
     labels:
-      # Web interface routing
       - "coolify.managed=true"
       - "traefik.enable=true"
-      - "traefik.http.routers.billionmail-web.rule=Host(`${BILLIONMAIL_HOSTNAME}`)"
-      - "traefik.http.routers.billionmail-web.entrypoints=https"
-      - "traefik.http.routers.billionmail-web.tls=true"
-      - "traefik.http.routers.billionmail-web.tls.certresolver=letsencrypt"
-      - "traefik.http.services.billionmail-web.loadbalancer.server.port=80"
+      - "traefik.http.routers.billionmail.rule=Host(`${BILLIONMAIL_HOSTNAME}`)"
+      - "traefik.http.routers.billionmail.entrypoints=https"
+      - "traefik.http.routers.billionmail.tls.certresolver=letsencrypt"
+      - "traefik.http.services.billionmail.loadbalancer.server.port=80"
       
-      # RoundCube webmail
-      - "traefik.http.routers.billionmail-webmail.rule=Host(`webmail.${DOMAIN}`) || PathPrefix(`/roundcube`)"
-      
-    # Mail ports moeten WEL exposed worden (niet via Traefik)
-    ports:
-      - "25:25"     # SMTP
-      - "465:465"   # SMTPS
-      - "587:587"   # Submission
-      - "993:993"   # IMAPS
-      
-    depends_on:
-      db:
-        condition: service_healthy
-        
     restart: unless-stopped
     
     networks:
-      - billionmail-network
+      - billionmail-net
       
     healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost/health"]
+      test: ["CMD", "curl", "-f", "http://localhost"]
       interval: 30s
       timeout: 10s
       retries: 3
-      start_period: 60s
-
-  # MySQL Database
-  db:
-    image: mysql:8.0
-    container_name: billionmail-db
-    
-    environment:
-      - MYSQL_ROOT_PASSWORD=${DB_ROOT_PASSWORD}
-      - MYSQL_DATABASE=${DB_NAME:-billionmail}
-      - MYSQL_USER=${DB_USER:-billionmail}
-      - MYSQL_PASSWORD=${DB_PASSWORD}
-      - TZ=${TZ:-Europe/Amsterdam}
-      
-    volumes:
-      - db_data:/var/lib/mysql
-      - ./init.sql:/docker-entrypoint-initdb.d/init.sql:ro
-      
-    command: >
-      --character-set-server=utf8mb4
-      --collation-server=utf8mb4_unicode_ci
-      --default-authentication-plugin=mysql_native_password
-      --max_allowed_packet=256M
-      
-    restart: unless-stopped
-    
-    networks:
-      - billionmail-network
-      
-    healthcheck:
-      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-u", "root", "-p${DB_ROOT_PASSWORD}"]
-      interval: 10s
-      timeout: 5s
-      retries: 5
-      
-    labels:
-      # Exclude from health checks (internal service)
-      - "coolify.exclude_from_hc=true"
+      start_period: 90s
 
 volumes:
-  billionmail_data:
+  billionmail_core:
     driver: local
-  vmail_data:
-    driver: local
-  db_data:
+  billionmail_vmail:
     driver: local
 
 networks:
-  billionmail-network:
+  billionmail-net:
     driver: bridge
-    driver_opts:
-      com.docker.network.bridge.name: br-billionmail
