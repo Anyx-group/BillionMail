@@ -1,30 +1,27 @@
-# docker-compose.coolify.yml
+# docker-compose.yml
 version: "3.9"
 
 services:
   billionmail:
-    # BUILD vanaf source in plaats van pull
-    build:
-      context: .
-      dockerfile: Dockerfiles/Dockerfile
-      args:
-        - VERSION=latest
+    # Gebruik officiële pre-built image van GitHub Container Registry
+    image: ghcr.io/aapanel/billionmail:latest
     
     container_name: billionmail-core
-    hostname: ${BILLIONMAIL_HOSTNAME:-mail.example.com}
+    hostname: ${BILLIONMAIL_HOSTNAME}
     
     environment:
       - TZ=${TZ:-Europe/Amsterdam}
       - FAIL2BAN_INIT=${FAIL2BAN_INIT:-y}
       - BILLIONMAIL_HOSTNAME=${BILLIONMAIL_HOSTNAME}
-      - ADMIN_EMAIL=${ADMIN_EMAIL:-admin@example.com}
+      - ADMIN_EMAIL=${ADMIN_EMAIL}
       - ADMIN_PASSWORD=${ADMIN_PASSWORD}
       
     volumes:
-      - billionmail_core:/opt/billionmail/core/data
-      - billionmail_vmail:/opt/billionmail/vmail-data
-      - ./ssl:/opt/billionmail/ssl:rw
-      - ./conf:/opt/billionmail/conf:rw
+      # Persistent storage (Coolify managed)
+      - billionmail_core_data:/opt/billionmail/core/data
+      - billionmail_vmail_data:/opt/billionmail/vmail-data
+      - billionmail_ssl:/opt/billionmail/ssl
+      - billionmail_conf:/opt/billionmail/conf
       - /var/run/docker.sock:/var/run/docker.sock:ro
       
     cap_add:
@@ -32,40 +29,51 @@ services:
       - NET_ADMIN
       - NET_RAW
       
-    # Mail ports (NIET via Traefik)
+    # Mail ports MOETEN geëxposed worden (niet via Traefik)
     ports:
-      - "25:25"
-      - "465:465"
-      - "587:587"
-      - "993:993"
-    
-    # Coolify Labels voor web interface
+      - "25:25"     # SMTP
+      - "465:465"   # SMTPS
+      - "587:587"   # Submission
+      - "993:993"   # IMAPS
+      # Port 80/443 via Coolify/Traefik
+      
     labels:
+      # Coolify web interface routing
       - "coolify.managed=true"
       - "traefik.enable=true"
-      - "traefik.http.routers.billionmail.rule=Host(`${BILLIONMAIL_HOSTNAME}`)"
-      - "traefik.http.routers.billionmail.entrypoints=https"
-      - "traefik.http.routers.billionmail.tls.certresolver=letsencrypt"
-      - "traefik.http.services.billionmail.loadbalancer.server.port=80"
+      - "traefik.http.routers.billionmail-web.rule=Host(`${BILLIONMAIL_HOSTNAME}`)"
+      - "traefik.http.routers.billionmail-web.entrypoints=https"
+      - "traefik.http.routers.billionmail-web.tls=true"
+      - "traefik.http.routers.billionmail-web.tls.certresolver=letsencrypt"
+      - "traefik.http.services.billionmail-web.loadbalancer.server.port=80"
+      
+      # WebMail routing
+      - "traefik.http.routers.billionmail-webmail.rule=Host(`webmail.${DOMAIN}`) || (Host(`${BILLIONMAIL_HOSTNAME}`) && PathPrefix(`/roundcube`))"
+      - "traefik.http.routers.billionmail-webmail.entrypoints=https"
+      - "traefik.http.routers.billionmail-webmail.tls.certresolver=letsencrypt"
       
     restart: unless-stopped
     
     networks:
-      - billionmail-net
+      - billionmail-network
       
     healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost"]
+      test: ["CMD-SHELL", "curl -f http://localhost || exit 1"]
       interval: 30s
       timeout: 10s
       retries: 3
-      start_period: 90s
+      start_period: 120s
 
 volumes:
-  billionmail_core:
+  billionmail_core_data:
     driver: local
-  billionmail_vmail:
+  billionmail_vmail_data:
+    driver: local
+  billionmail_ssl:
+    driver: local
+  billionmail_conf:
     driver: local
 
 networks:
-  billionmail-net:
+  billionmail-network:
     driver: bridge
